@@ -26,8 +26,8 @@ Testing
 
 you can test with following commands
 
-    ausearch --start recent --raw > test.log
-    cat test.log |  ./audisp-simple_test.py 
+    sudo ausearch --start recent --raw > test.log
+    cat test.log |  python audisp-simple_test.py 
 
 
 How it looks like
