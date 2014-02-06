@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
 """
-parse audit events and sends them to syslog after changing uid to username, and changing output to json with the following structure
-{ "serial": serial, "events": ["event1","event2",...,"eventN"] }
+parse audit events and sends them to syslog after changing uid to username
 """
 
 __author__ = "Karim Boumedhel"                                                                                                                                 
@@ -19,6 +18,7 @@ import sys
 import auparse
 import syslog
 import simplejson as json
+
 
 stop = 0
 hup = 0
@@ -55,7 +55,7 @@ def coolparse(au):
     global serial
     global serials 
     global formatted
-    result = ''
+    result = {}
     event_cnt = 1
     au.reset()
     while True:
@@ -72,7 +72,7 @@ def coolparse(au):
 
             au.first_field()
             while True:
-                result += "%s=%s " % (au.get_field_name(), au.interpret_field())
+                result[au.get_field_name()] = au.interpret_field()
                 if not au.next_field(): break
             record_cnt += 1
             if not au.next_record(): break
@@ -80,26 +80,26 @@ def coolparse(au):
         if not serial in serials and len(serials) >0:
                 syslog.openlog(programname)
                 syslog.syslog(syslog.LOG_NOTICE, json.dumps(formatted) )
-                formatted = {}
+		formatted = {}
                 serials.append(serial)
-                formatted['serial'] = serial
-                formatted['events']=[result.replace('\n','')]
+		formatted['serial'] = serial
+		formatted['events'] = [result]
         else:
                 if len(serials) == 0:
                         serials.append(serial)
-                        formatted['serial'] = serial
-                        formatted['events']=[result.replace('\n','')]
-                else:
-                        formatted['events'].append(result.replace('\n',''))
+			formatted['serial'] = serial
+			formatted['events'] = [result]
+		else:
+			formatted['events'].append(result)
         if not au.parse_next_event(): break
 
 def main():
         global serials 
         global stop
         global hup
-        global formatted
+	global formatted
         serials = []
-        formatted = {}
+	formatted = {}
         while stop == 0:
                 try:
                         buf=sys.stdin
